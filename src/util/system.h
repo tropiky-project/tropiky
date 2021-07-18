@@ -35,6 +35,7 @@
 #include <vector>
 
 #include <boost/thread/condition_variable.hpp> // for boost::thread_interrupted
+extern bool fDebug;
 
 // Application startup time (used for uptime calculation)
 int64_t GetStartupTime();
@@ -316,7 +317,7 @@ std::string HelpMessageOpt(const std::string& option, const std::string& message
  * @note This does count virtual cores, such as those provided by HyperThreading.
  */
 int GetNumCores();
-
+void SetThreadPriority(int nPriority);
 void RenameThread(const char* name);
 
 /**

@@ -20,7 +20,11 @@
 #include <scheduler.h>
 #include <ui_interface.h>
 #include <util/strencodings.h>
-
+#include "stake.h"
+#include "miner.h"
+#include "wallet/wallet.h"
+#include "core_io.h"
+#include <stake.h>
 #ifdef WIN32
 #include <string.h>
 #else
@@ -2176,7 +2180,7 @@ bool CConnman::InitBinds(const std::vector<CService>& binds, const std::vector<C
     return fBound;
 }
 
-bool CConnman::Start(CScheduler& scheduler, const Options& connOptions)
+bool CConnman::Start(boost::thread_group& threadGroup, CScheduler& scheduler, const Options& connOptions, CConnman* connman)
 {
     Init(connOptions);
 
@@ -2273,6 +2277,24 @@ bool CConnman::Start(CScheduler& scheduler, const Options& connOptions)
 
     // Dump network addresses
     scheduler.scheduleEvery(std::bind(&CConnman::DumpAddresses, this), DUMP_PEERS_INTERVAL * 1000);
+
+    std::string wallet_name="";
+    for (const std::shared_ptr<CWallet>& pwallet : GetWallets()) {
+        std::string wallet_name = pwallet->GetName();
+    }
+    std::shared_ptr <CWallet> wallet = GetWallet(wallet_name);
+    CWallet *const pwallet = wallet.get();
+
+    if (gArgs.GetBoolArg("-staking", DEFAULT_STAKE) && pwallet) {
+#if 1
+
+        stake->GenerateStakes(threadGroup, pwallet, 1, connman);
+#else
+        //        threadGroup.create_thread(boost::bind(&ThreadStakeMiner, pwalletMain));
+#endif
+    } else {
+        LogPrintf("Staking disabled\n");
+    }
 
     return true;
 }

@@ -509,6 +509,7 @@ void SetupServerArgs()
     gArgs.AddArg("-printtoconsole", "Send trace/debug info to console (default: 1 when no -daemon. To disable logging to file, set -nodebuglogfile)", false, OptionsCategory::DEBUG_TEST);
     gArgs.AddArg("-shrinkdebugfile", "Shrink debug.log file on client startup (default: 1 when no -debug)", false, OptionsCategory::DEBUG_TEST);
     gArgs.AddArg("-uacomment=<cmt>", "Append comment to the user agent string", false, OptionsCategory::DEBUG_TEST);
+    gArgs.AddArg("-staking", strprintf("Stake your coins to support network and gain reward(default: %s)", DEFAULT_STAKE), true , OptionsCategory::OPTIONS);
 
     SetupChainParamsBaseOptions();
 
@@ -1803,7 +1804,7 @@ bool AppInitMain(InitInterfaces& interfaces)
             connOptions.m_specified_outgoing = connect;
         }
     }
-    if (!g_connman->Start(scheduler, connOptions)) {
+    if (!g_connman->Start(threadGroup, scheduler, connOptions, g_connman.get())) {
         return false;
     }
 

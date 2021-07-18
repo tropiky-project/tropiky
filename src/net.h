@@ -38,6 +38,10 @@
 class CScheduler;
 class CNode;
 class BanMan;
+namespace boost
+{
+    class thread_group;
+}
 
 /** Time between pings automatically sent out for latency probing and keepalive (in seconds). */
 static const int PING_INTERVAL = 2 * 60;
@@ -177,7 +181,7 @@ public:
 
     CConnman(uint64_t seed0, uint64_t seed1);
     ~CConnman();
-    bool Start(CScheduler& scheduler, const Options& options);
+    bool Start(boost::thread_group& threadGroup, CScheduler& scheduler, const Options& options, CConnman* connman);
 
     // TODO: Remove NO_THREAD_SAFETY_ANALYSIS. Lock cs_vNodes before reading the variable vNodes.
     //

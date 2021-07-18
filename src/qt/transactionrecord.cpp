@@ -14,6 +14,7 @@
 #include <stdint.h>
 
 #include <QDateTime>
+#include <../wallet/wallet.h>
 
 /* Return positive answer if transaction should be shown in list.
  */
@@ -34,10 +35,34 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interface
     CAmount nCredit = wtx.credit;
     CAmount nDebit = wtx.debit;
     CAmount nNet = nCredit - nDebit;
+
     uint256 hash = wtx.tx->GetHash();
     std::map<std::string, std::string> mapValue = wtx.value_map;
 
-    if (nNet > 0 || wtx.is_coinbase)
+    if (wtx.is_coinstake) {
+        for(unsigned int i = 1; i < wtx.tx->vout.size(); i++)
+        {
+            const CTxOut& txout = wtx.tx->vout[i];
+            isminetype mine = wtx.txout_is_mine[i];
+            if(mine)
+            {
+                TransactionRecord sub(hash, nTime);
+                CTxDestination address;
+
+                sub.idx = i; // vout index
+                if(wtx.is_coinstake){
+
+                    sub.address = EncodeDestination(wtx.txout_address[i]);
+                    sub.credit = txout.nValue + nNet;
+                    sub.involvesWatchAddress = mine & ISMINE_WATCH_ONLY;
+                    sub.type = TransactionRecord::StakeMint;
+                    nNet = txout.nValue + nNet;
+                }
+                parts.append(sub);
+            }
+        }
+    }
+    else if (nNet > 0 || wtx.is_coinbase)
     {
         //
         // Credit
@@ -98,7 +123,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interface
             CAmount nChange = wtx.change;
 
             parts.append(TransactionRecord(hash, nTime, TransactionRecord::SendToSelf, "",
-                            -(nDebit - nChange), nCredit - nChange));
+                                           -(nDebit - nChange), nCredit - nChange));
             parts.last().involvesWatchAddress = involvesWatchAddress;   // maybe pass to TransactionRecord as constructor argument
         }
         else if (fAllFromMe)
@@ -166,10 +191,10 @@ void TransactionRecord::updateStatus(const interfaces::WalletTxStatus& wtx, int 
 
     // Sort order, unrecorded transactions sort to the top
     status.sortKey = strprintf("%010d-%01d-%010u-%03d",
-        wtx.block_height,
-        wtx.is_coinbase ? 1 : 0,
-        wtx.time_received,
-        idx);
+                               wtx.block_height,
+                               wtx.is_coinbase ? 1 : 0,
+                               wtx.time_received,
+                               idx);
     status.countsForBalance = wtx.is_trusted && !(wtx.blocks_to_maturity > 0);
     status.depth = wtx.depth_in_main_chain;
     status.cur_num_blocks = numBlocks;
@@ -186,8 +211,8 @@ void TransactionRecord::updateStatus(const interfaces::WalletTxStatus& wtx, int 
             status.open_for = wtx.lock_time;
         }
     }
-    // For generated transactions, determine maturity
-    else if(type == TransactionRecord::Generated)
+        // For generated transactions, determine maturity
+    else if(type == TransactionRecord::Generated || type == TransactionRecord::StakeMint)
     {
         if (wtx.blocks_to_maturity > 0)
         {

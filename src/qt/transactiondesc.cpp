@@ -145,6 +145,19 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
             strHTML += "(" + tr("not accepted") + ")";
         strHTML += "<br>";
     }
+    else if(wtx.is_coinstake){
+        for(unsigned int i = 1; i < wtx.tx->vout.size(); i++)
+        {
+            const CTxOut& txout = wtx.tx->vout[i];
+            isminetype mine = wtx.txout_is_mine[i];
+            if(mine)
+            {
+                if(wtx.is_coinstake){
+                    nNet = txout.nValue + nNet;
+                }
+            }
+        }
+    }
     else if (nNet > 0)
     {
         //

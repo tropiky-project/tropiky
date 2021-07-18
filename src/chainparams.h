@@ -58,6 +58,7 @@ public:
         MAX_BASE58_TYPES
     };
 
+    const uint256& HashGenesisBlock() const { return consensus.hashGenesisBlock; }
     const Consensus::Params& GetConsensus() const { return consensus; }
     const CMessageHeader::MessageStartChars& MessageStart() const { return pchMessageStart; }
     int GetDefaultPort() const { return nDefaultPort; }
@@ -85,6 +86,11 @@ public:
     const std::vector<SeedSpec6>& FixedSeeds() const { return vFixedSeeds; }
     const CCheckpointData& Checkpoints() const { return checkpointData; }
     const ChainTxData& TxData() const { return chainTxData; }
+    ///staking
+    int64_t StakingRoundPeriod() const { return nStakingRoundPeriod; }
+    int64_t StakingInterval() const { return nStakingInterval; }
+    int64_t StakingMinAge() const { return nStakingMinAge; }
+    int COINBASE_MATURITY() const { return nMaturity; }
 protected:
     CChainParams() {}
 
@@ -106,6 +112,11 @@ protected:
     CCheckpointData checkpointData;
     ChainTxData chainTxData;
     bool m_fallback_fee_enabled;
+    ///staking
+    int nMaturity;
+    int64_t nStakingRoundPeriod;
+    int64_t nStakingInterval;
+    int64_t nStakingMinAge;
 };
 
 /**

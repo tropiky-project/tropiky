@@ -51,7 +51,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
-    const char* pszTimestamp = "Jovenel Moise: Police kill four after Haiti's president assassinated";
+    const char* pszTimestamp = "Europe floods: Victims face massive clean-up as waters recede";
     const CScript genesisOutputScript = CScript() << ParseHex("040184710fa689ad5023690c80f3a49c8f13f8d45b8c857fbcbc8bc4a8e4d3eb4b10f4d4604fa08dce601aaf0f470216fe1b51850b4acf21b179c45070ac7b03a9") << OP_CHECKSIG;
     return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward);
 }
@@ -115,10 +115,10 @@ public:
         nStakingMinAge = 3 * 60 *60;
         nMaturity = 100;
 
-        genesis = CreateGenesisBlock(1625732164, 2085770087, 0x1e0ffff0, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1626591721, 2085139753, 0x1e0ffff0, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x50b403745620873e4f9fb02ddba52bfb204fd77f3fec9d2b441a73c8d55758bd"));
-        assert(genesis.hashMerkleRoot == uint256S("0x48d90b81773be28b54f2a38d10c9044b29418551a7d098119888693a62a654c2"));
+        assert(consensus.hashGenesisBlock == uint256S("0xd22cc121f23144c9d830b915617ccd94673a941c92743270e7b0c2942a9240b7"));
+        assert(genesis.hashMerkleRoot == uint256S("0x117a2c67be6f2de0d12383f769e3d4aff98f9bf14307e748e5cfaf3b6148d8f6"));
 
         // Note that of those which support the service bits prefix, most only support a subset of
         // possible options.
@@ -145,13 +145,13 @@ public:
 
         checkpointData = {
             {
-                {  0, uint256S("0x50b403745620873e4f9fb02ddba52bfb204fd77f3fec9d2b441a73c8d55758bd")},
+                {  0, uint256S("0xd22cc121f23144c9d830b915617ccd94673a941c92743270e7b0c2942a9240b7")},
             }
         };
 
         chainTxData = ChainTxData{
             // Data from rpc: getchaintxstats 4096 2cdba8c47858d34cf0e02dfb8733263a3ed8705b1663ec7c158783d77b93e7ee
-            /* nTime    */ 1565379143,
+            /* nTime    */ 1626591721,
             /* nTxCount */ 0,
             /* dTxRate  */ 0.0
         };
@@ -210,10 +210,10 @@ public:
         m_assumed_blockchain_size = 2;
         m_assumed_chain_state_size = 1;
 
-        genesis = CreateGenesisBlock(1625732164, 2085770087, 0x1e0ffff0, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1626591721, 2085139753, 0x1e0ffff0, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x50b403745620873e4f9fb02ddba52bfb204fd77f3fec9d2b441a73c8d55758bd"));
-        assert(genesis.hashMerkleRoot == uint256S("0x48d90b81773be28b54f2a38d10c9044b29418551a7d098119888693a62a654c2"));
+        assert(consensus.hashGenesisBlock == uint256S("0xd22cc121f23144c9d830b915617ccd94673a941c92743270e7b0c2942a9240b7"));
+        assert(genesis.hashMerkleRoot == uint256S("0x117a2c67be6f2de0d12383f769e3d4aff98f9bf14307e748e5cfaf3b6148d8f6"));
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -243,7 +243,7 @@ public:
 
         chainTxData = ChainTxData{
             // Data from rpc: getchaintxstats 4096 e79561972208ba3a02c308482176b33f3ec841d4213ea7bbaa3f22b7c8a16f32
-            /* nTime    */ 1565582448,
+            /* nTime    */ 1626591721,
             /* nTxCount */ 0,
             /* dTxRate  */ 0.0
         };
@@ -300,10 +300,10 @@ public:
 
         UpdateVersionBitsParametersFromArgs(args);
 
-        genesis = CreateGenesisBlock(1625732164, 2085770087, 0x1e0ffff0, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1626591721, 2085139753, 0x1e0ffff0, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x50b403745620873e4f9fb02ddba52bfb204fd77f3fec9d2b441a73c8d55758bd"));
-        assert(genesis.hashMerkleRoot == uint256S("0x48d90b81773be28b54f2a38d10c9044b29418551a7d098119888693a62a654c2"));
+        assert(consensus.hashGenesisBlock == uint256S("0xd22cc121f23144c9d830b915617ccd94673a941c92743270e7b0c2942a9240b7"));
+        assert(genesis.hashMerkleRoot == uint256S("0x117a2c67be6f2de0d12383f769e3d4aff98f9bf14307e748e5cfaf3b6148d8f6"));
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
@@ -314,7 +314,7 @@ public:
 
         checkpointData = {
             {
-                {0, uint256S("530827f38f93b43ed12af0b3ad25a288dc02ed74d6d7857862df51fc56c416f9")},
+                {0, uint256S("d22cc121f23144c9d830b915617ccd94673a941c92743270e7b0c2942a9240b7")},
             }
         };
 

@@ -107,8 +107,8 @@ public:
         pchMessageStart[3] = 0xdb;
         nDefaultPort = 55788;
         nPruneAfterHeight = 100000;
-        m_assumed_blockchain_size = 22;
-        m_assumed_chain_state_size = 3;
+        m_assumed_blockchain_size = 2;
+        m_assumed_chain_state_size = 2;
 
         nStakingRoundPeriod = 2.5 * 60;; // 2 minutes a round
         nStakingInterval = 220;

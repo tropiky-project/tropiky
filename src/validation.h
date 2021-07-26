@@ -114,7 +114,7 @@ static const int64_t DEFAULT_MAX_TIP_AGE = 24 * 60 * 60;
 /** Maximum age of our tip in seconds for us to be considered current for fee estimation */
 static const int64_t MAX_FEE_ESTIMATION_TIP_AGE = 3 * 60 * 60;
 
-#define START_POS_BLOCK 1627693762 /// Sat Jul 31 2021 01:09:22 GMT+0000
+#define START_POS_BLOCK 1630481430 /// Wed Sep 01 2021 07:30:30 GMT+0000
 
 /** Default for -permitbaremultisig */
 static const bool DEFAULT_PERMIT_BAREMULTISIG = true;

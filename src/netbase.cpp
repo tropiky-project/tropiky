@@ -83,8 +83,9 @@ bool static LookupIntern(const char *pszName, std::vector<CNetAddr>& vIP, unsign
     aiHint.ai_flags = fAllowLookup ? AI_ADDRCONFIG : AI_NUMERICHOST;
     struct addrinfo *aiRes = nullptr;
     int nErr = getaddrinfo(pszName, nullptr, &aiHint, &aiRes);
-    if (nErr)
+    if (nErr){
         return false;
+    }
 
     struct addrinfo *aiTrav = aiRes;
     while (aiTrav != nullptr && (nMaxSolutions == 0 || vIP.size() < nMaxSolutions))

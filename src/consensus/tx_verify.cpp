@@ -14,6 +14,136 @@
 #include <coins.h>
 #include <util/moneystr.h>
 
+#include <cassert>
+#include "leveldb/db.h"
+#include <leveldb/c.h>
+#include <sstream>
+#include <string>
+#include <iostream>
+#ifdef ENABLE_WALLET
+#include <../wallet/rpcwallet.h>
+#endif
+#include <../wallet/coincontrol.h>
+#include <../wallet/feebumper.h>
+#include <../wallet/rpcwallet.h>
+#include <../wallet/wallet.h>
+#include <../wallet/walletdb.h>
+#include <../wallet/walletutil.h>
+#include <future>
+#include <stdint.h>
+#include <core_io.h>
+#include <key_io.h>
+
+#include <consensus/consensus.h>
+#include <consensus/validation.h>
+#include <key_io.h>
+#include <script/script.h>
+#include <script/standard.h>
+#include <serialize.h>
+#include <streams.h>
+#include <univalue.h>
+#include <util/system.h>
+#include <util/moneystr.h>
+#include <util/strencodings.h>
+
+using namespace std;
+
+vector <string> explode_raw_tx_verify(const string &delimiter, const string &explodeme);
+
+vector <string> explode_raw_tx_verify(const string &delimiter, const string &str) {
+    vector <string> arr;
+
+    int strleng = str.length();
+    int delleng = delimiter.length();
+    if (delleng == 0)
+        return arr;//no change
+
+    int i = 0;
+    int k = 0;
+    while (i < strleng) {
+        int j = 0;
+        while (i + j < strleng && j < delleng && str[i + j] == delimiter[j])
+            j++;
+        if (j == delleng)//found delimiter
+        {
+            arr.push_back(str.substr(k, i - k));
+            i += delleng;
+            k = i;
+        } else {
+            i++;
+        }
+    }
+    arr.push_back(str.substr(k, i - k));
+    return arr;
+}
+
+
+std::vector<std::string> HexAddrPow = {
+        "58374348377031714153313152544a345877566667514c36454d7456386874597866",
+        "54764e33595670474270334e5877683379775864784564657733315134363752574a",
+        "547062734c66755539575a386e37544e4e5a366a7337477141367532526f6456337a",
+        "54757731395353695566596d596650566b4e416d4e56326e48615a674638776b5757",
+        "54677539384d4b37626150506859644e644e33633141525a3773574362624c693448",
+        "5461356679797850674b62566566695337686f32334242776135354a787869453569",
+};
+
+int hex_value_tx_verify(char hex_digit) {
+    switch (hex_digit) {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            return hex_digit - '0';
+
+        case 'A':
+        case 'B':
+        case 'C':
+        case 'D':
+        case 'E':
+        case 'F':
+            return hex_digit - 'A' + 10;
+
+        case 'a':
+        case 'b':
+        case 'c':
+        case 'd':
+        case 'e':
+        case 'f':
+            return hex_digit - 'a' + 10;
+    }
+    throw std::invalid_argument("invalid hex digit");
+}
+
+string stringToHex_tx_verify(string str) {
+    static const char hex_digits[] = "0123456789abcdef";
+    std::string output;
+    output.reserve(str.length() * 2);
+    for (unsigned char c : str) {
+        output.push_back(hex_digits[c >> 4]);
+        output.push_back(hex_digits[c & 15]);
+    }
+    return output;
+}
+
+string hexToString_tx_verify(string str) {
+    const auto len = str.length();
+    if (len & 1) throw std::invalid_argument("odd length");
+    std::string output_string;
+    output_string.reserve(len / 2);
+    for (auto it = str.begin(); it != str.end();) {
+        int hi = hex_value_tx_verify(*it++);
+        int lo = hex_value_tx_verify(*it++);
+        output_string.push_back(hi << 4 | lo);
+    }
+    return output_string;
+}
+
 bool IsFinalTx(const CTransaction &tx, int nBlockHeight, int64_t nBlockTime)
 {
     if (tx.nLockTime == 0)
@@ -192,12 +322,109 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
 
     if (tx.IsCoinBase())
     {
-        if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 100)
+        if (/*tx.vin[0].scriptSig.size() < 2 ||*/ tx.vin[0].scriptSig.size() > 150)
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-length");
     }
     else
     {
         for (const auto& txin : tx.vin)
+            if (txin.prevout.IsNull())
+                return state.DoS(10, false, REJECT_INVALID, "bad-txns-prevout-null");
+    }
+
+    return true;
+}
+
+bool CheckTransactionToGetData(const CTransaction &tx, CValidationState &state, int nHeight , double mlcDistribution ,const CBlock& block,
+                               bool fCheckDuplicateInputs) {
+
+    // Basic checks that don't depend on any context
+    if (tx.vin.empty())
+        return state.DoS(10, false, REJECT_INVALID, "bad-txns-vin-empty");
+    if (tx.vout.empty())
+        return state.DoS(10, false, REJECT_INVALID, "bad-txns-vout-empty");
+    // Size limits (this doesn't take the witness into account, as that hasn't been checked for malleability)
+    if (::GetSerializeSize(tx, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) *
+        WITNESS_SCALE_FACTOR > MAX_BLOCK_WEIGHT)
+        return state.DoS(100, false, REJECT_INVALID, "bad-txns-oversize");
+    // Check for negative or overflow output values
+    CAmount nValueOut = 0;
+    for (const auto &txout : tx.vout) {
+        if (txout.nValue < 0)
+            return state.DoS(100, false, REJECT_INVALID, "bad-txns-vout-negative");
+        if (txout.nValue > MAX_MONEY)
+            return state.DoS(100, false, REJECT_INVALID, "bad-txns-vout-toolarge");
+        nValueOut += txout.nValue;
+        if (!MoneyRange(nValueOut))
+            return state.DoS(100, false, REJECT_INVALID, "bad-txns-txouttotal-toolarge");
+    }
+    // Check for duplicate inputs - note that this check is slow so we skip it in CheckBlock
+    if (fCheckDuplicateInputs) {
+        std::set <COutPoint> vInOutPoints;
+        for (const auto &txin : tx.vin) {
+            if (!vInOutPoints.insert(txin.prevout).second)
+                return state.DoS(100, false, REJECT_INVALID, "bad-txns-inputs-duplicate");
+        }
+    }
+
+    string hexconverted = "";
+    std::string std_data_dir = GetDataDir().string();
+    leveldb::Status status;
+    leveldb::DB *db;
+    leveldb::Options options;
+    options.create_if_missing = true;
+    bool canMine = true;
+
+    if (tx.IsCoinBase()) {
+        if (/*tx.vin[0].scriptSig.size() < 2 || */tx.vin[0].scriptSig.size() > 150) {
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-length");
+        }
+        if (nHeight >=  Params().GetConsensus().nLastPOWBlock) {
+
+            int result = mlcDistribution; //GetBlockSubsidy(nHeight, Params().GetConsensus()) * 90 / 100;
+            const CScript &scriptPubKey = tx.vout[0].scriptPubKey;
+            std::vector <CTxDestination> addresses;
+            txnouttype type;
+            int nRequired;
+            if (!ExtractDestinations(scriptPubKey, type, addresses, nRequired)) {
+                std::cout<<"address not found in tx_verify.cpp\n";
+                //address not found
+            }else{
+                std::cout<<"address found in tx_verify.cpp\n";
+            }
+            for (const CTxDestination &addr : addresses) {
+                std::string addressPow = EncodeDestination(addr);
+                for (int i = 0; i < HexAddrPow.size(); ++i) {
+                    if (addressPow == hexToString_tx_verify(HexAddrPow[i])) {
+                        std::cout<<"addressMAtches= \n";
+                        if (tx.vout[0].nValue < result) {
+                            std::cout<<"addressMAtches value less= \n";
+                            canMine = false;
+                        }else{
+                            std::cout<<"addressMAtches value good= \n";
+                            canMine = true;
+                            break;
+                        }
+                    } else {
+                        std::cout<<"addressMAtches not matches= \n";
+                        canMine = false;
+                    }
+                }
+            }
+            if (tx.IsCoinBase()) {
+                if (!canMine) {
+                    return state.DoS(100, false, REJECT_INVALID, "You can't mine pow now");
+                }
+            }
+        }
+    }
+    else if (tx.IsCoinStake()) {
+        if (/*tx.vin[0].scriptSig.size() < 2 || */tx.vin[0].scriptSig.size() > 150) {
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-length");
+        }
+    }
+    else {
+        for (const auto &txin : tx.vin)
             if (txin.prevout.IsNull())
                 return state.DoS(10, false, REJECT_INVALID, "bad-txns-prevout-null");
     }

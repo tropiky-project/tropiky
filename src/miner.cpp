@@ -257,6 +257,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     assert(pindexPrev != nullptr);
     nHeight = pindexPrev->nHeight + 1;
 
+    if(nHeight >= Params().GetConsensus().nLastPOWBlock){
+        throw std::runtime_error(strprintf("TestBlockValidity failed: you can't mine pow now"));
+    }
+
     pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
@@ -597,13 +601,13 @@ bool ProcessBlockFound(CBlock* pblock, CWallet& wallet)
     {
         LOCK(cs_main);
         if (pblock->hashPrevBlock != chainActive.Tip()->GetBlockHash())
-            return error("Nexalt : generated block is stale");
+            return error("Tropiky : generated block is stale");
 
 
         auto locked_chain = wallet.chain().lock();
         for(const CTxIn& vin : pblock->vtx[1]->vin) {
             if (wallet.IsSpent(*locked_chain,vin.prevout.hash, vin.prevout.n)) {
-                return error("nexalt : Gen block stake is invalid - UTXO spent");
+                return error("tropiky : Gen block stake is invalid - UTXO spent");
             }
         }
     }
@@ -616,7 +620,7 @@ bool ProcessBlockFound(CBlock* pblock, CWallet& wallet)
     CValidationState state;
     std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
     if (!ProcessNewBlock(chainParams ,shared_pblock  , false, nullptr)) {
-        return error("Nexalt : ProcessNewBlock, block not accepted");
+        return error("tropiky : ProcessNewBlock, block not accepted");
     }
 
     {

@@ -91,6 +91,7 @@ public:
     int64_t StakingInterval() const { return nStakingInterval; }
     int64_t StakingMinAge() const { return nStakingMinAge; }
     int COINBASE_MATURITY() const { return nMaturity; }
+    int LAST_POW_BLOCK() const { return consensus.nLastPOWBlock; }
 protected:
     CChainParams() {}
 

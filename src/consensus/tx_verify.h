@@ -14,11 +14,17 @@ class CBlockIndex;
 class CCoinsViewCache;
 class CTransaction;
 class CValidationState;
+class CScript;
+class CBlock;
+
+using namespace std;
 
 /** Transaction validation functions */
 
 /** Context-independent validity checks */
 bool CheckTransaction(const CTransaction& tx, CValidationState& state, bool fCheckDuplicateInputs=true);
+
+bool CheckTransactionToGetData(const CTransaction& tx, CValidationState& state, int height , double mlcDistribution,const CBlock& block , bool fCheckDuplicateInputs=true);
 
 namespace Consensus {
 /**

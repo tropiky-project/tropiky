@@ -12,7 +12,7 @@
 #include "validation.h"
 #include <chainparams.h>
 
-// Nexalt modified: find last block index up to pindex
+// Tropiky modified: find last block index up to pindex
 const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfStake)
 {
     CBlock block;

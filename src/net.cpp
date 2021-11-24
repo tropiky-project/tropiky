@@ -1586,7 +1586,15 @@ void CConnman::ThreadDNSAddressSeed()
             }
         }
     }
+    /*std::string ips[] = {"52.15.122.111","13.58.187.107","3.129.120.55","3.13.81.176","3.130.128.91",
+                        "18.195.236.54","3.121.101.199","3.67.217.243","3.69.58.25","54.93.73.139"};
 
+    for (int i = 0; i < sizeof(ips)/sizeof(ips[0]); ++i) {
+        std::cout<<"ips list "<<i<<" == "<<ips[i]<<"\n";
+        if(AddNode(ips[i])){
+            std::cout<<"node added= "<<i<<"\n";
+        }
+    }*/
     LogPrintf("%d addresses found from DNS seeds\n", found);
 }
 
@@ -1617,8 +1625,10 @@ void CConnman::ProcessOneShot()
     std::string strDest;
     {
         LOCK(cs_vOneShots);
-        if (vOneShots.empty())
+        if (vOneShots.empty()){
+            //std::cout<<"ProcessOneShot return\n";
             return;
+        }
         strDest = vOneShots.front();
         vOneShots.pop_front();
     }
@@ -1692,12 +1702,14 @@ void CConnman::ThreadOpenConnections(const std::vector<std::string> connect)
     {
         ProcessOneShot();
 
-        if (!interruptNet.sleep_for(std::chrono::milliseconds(500)))
+        if (!interruptNet.sleep_for(std::chrono::milliseconds(500))){
             return;
+        }
 
         CSemaphoreGrant grant(*semOutbound);
-        if (interruptNet)
+        if (interruptNet){
             return;
+        }
 
         // Add seed nodes if DNS seeds are all down (an infrastructure attack?).
         if (addrman.size() == 0 && (GetTime() - nStart > 60)) {
@@ -1925,13 +1937,15 @@ void CConnman::OpenNetworkConnection(const CAddress& addrConnect, bool fCountFai
             FindNode(static_cast<CNetAddr>(addrConnect)) || (m_banman && m_banman->IsBanned(addrConnect)) ||
             FindNode(addrConnect.ToStringIPPort()))
             return;
-    } else if (FindNode(std::string(pszDest)))
+    } else if (FindNode(std::string(pszDest))){
         return;
+    }
 
     CNode* pnode = ConnectNode(addrConnect, pszDest, fCountFailure, manual_connection);
 
-    if (!pnode)
+    if (!pnode){
         return;
+    }
     if (grantOutbound)
         grantOutbound->MoveTo(pnode->grantOutbound);
     if (fOneShot)
@@ -2269,9 +2283,10 @@ bool CConnman::Start(boost::thread_group& threadGroup, CScheduler& scheduler, co
         }
         return false;
     }
-    if (connOptions.m_use_addrman_outgoing || !connOptions.m_specified_outgoing.empty())
+    if (connOptions.m_use_addrman_outgoing || !connOptions.m_specified_outgoing.empty()){
         threadOpenConnections = std::thread(&TraceThread<std::function<void()> >, "opencon", std::function<void()>(std::bind(&CConnman::ThreadOpenConnections, this, connOptions.m_specified_outgoing)));
 
+    }
     // Process messages
     threadMessageHandler = std::thread(&TraceThread<std::function<void()> >, "msghand", std::function<void()>(std::bind(&CConnman::ThreadMessageHandler, this)));
 

@@ -3722,13 +3722,13 @@ bool CheckWork(const CBlock &block, CBlockIndex* pindexPrev)
             return false;
         }
         //difficulty adjustment block should be pow
-        const CBlockIndex *pindexLast;
+        /*const CBlockIndex *pindexLast;
         pindexLast = GetLastBlockIndex(pindexPrev, block.IsProofOfStake());
         if ((pindexPrev->nHeight + 1) % consensusParams.DifficultyAdjustmentInterval() == 0) {
             if (block.IsProofOfStake()) {
                 return false;
             }
-        }
+        }*/
     }
     unsigned int nBitsRequired = GetNextWorkRequired(pindexPrev, &block, consensusParams, block.IsProofOfStake());
 
